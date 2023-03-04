@@ -1,19 +1,22 @@
-import { promisify } from 'util';
-import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
-export default class AppController {
-  static async getStats() {
-    this.getUser = promisify(dbClient.nbUsers);
-    this.getFile = promisify(dbClient.nbFiles);
-    const users = await this.getUser();
-    const files = await this.getFile();
-    return ({ users, files });
+class AppController {
+  static getStatus(request, response) {
+    const status = {
+      redis: redisClient.isAlive(),
+      db: dbClient.isAlive()
+    };
+    response.status(200).send(status);
   }
 
-  static getStatus() {
-    const redis = redisClient.isAlive();
-    const db = dbClient.isAlive();
-    return ({ redis, db });
+  static async getStats(request, response) {
+    const stats = {
+      users: await dbClient.nbUsers(),
+      files: await dbClient.nbFiles(),
+    };
+    response.status(200).send(stats);
   }
 }
+
+export default AppController;
